@@ -2,6 +2,7 @@
  Daemonize trond.
 """
 import logging
+import lockfile
 import logging.config
 import os
 import pkg_resources
@@ -32,7 +33,10 @@ class PIDFile(object):
         return self.lock.path
 
     def check_if_pidfile_exists(self):
-        self.lock.acquire()
+        try:
+            self.lock.acquire()
+        except lockfile.AlreadyLocked:
+            raise SystemExit("Daemon running - PID file locked")
 
         try:
             with open(self.filename, 'r') as fh:
@@ -43,6 +47,8 @@ class PIDFile(object):
         if self.is_process_running(pid):
             self._try_unlock()
             raise SystemExit("Daemon running as %s" % pid)
+        else:
+            pid = None
 
         if pid:
             self._try_unlock()
@@ -55,7 +61,7 @@ class PIDFile(object):
         try:
             os.kill(pid, 0)
             return True
-        except OSError:
+        except OSError as e:
             return False
 
     def __enter__(self):
