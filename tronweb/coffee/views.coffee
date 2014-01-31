@@ -23,7 +23,7 @@ window.dateFromNow = (string, defaultString='never') ->
     if string
         formatted = moment(string).format('MMM, Do YYYY, h:mm:ss a')
         delta = label_template
-            delta: moment(string).fromNow()
+            delta: moment.utc(string).fromNow()
             type: "clear"
     else
         formatted = defaultString
